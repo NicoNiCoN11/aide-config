@@ -16,31 +16,9 @@
   "models": {
     "mode": "merge",
     "providers": {
-      "minimax": {
-        "baseUrl": "https://api.minimax.io/anthropic",
-        "apiKey": "YOUR_API_KEY_HERE",
-        "api": "anthropic-messages",
-        "models": [
-          {
-            "id": "MiniMax-M2.5",
-            "name": "MiniMax M2.5",
-            "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 200000,
-            "maxTokens": 8192
-          }
-        ]
-      },
       "minimax-cn": {
         "baseUrl": "https://api.minimaxi.com/anthropic",
+        "apiKey": "YOUR_MINIMAX_API_KEY",
         "api": "anthropic-messages",
         "authHeader": true,
         "models": [
@@ -48,15 +26,8 @@
             "id": "MiniMax-M2.5",
             "name": "MiniMax M2.5",
             "reasoning": true,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0.3,
-              "output": 1.2,
-              "cacheRead": 0.03,
-              "cacheWrite": 0.12
-            },
+            "input": ["text"],
+            "cost": { "input": 0.3, "output": 1.2, "cacheRead": 0.03, "cacheWrite": 0.12 },
             "contextWindow": 200000,
             "maxTokens": 8192
           }
@@ -74,25 +45,17 @@
           "alias": "Minimax"
         }
       },
-      "workspace": "/Users/guojiayi/.openclaw/workspace",
-      "compaction": {
-        "mode": "safeguard"
-      },
+      "workspace": "~/.openclaw/workspace",
+      "compaction": { "mode": "safeguard" },
       "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
-      }
+      "subagents": { "maxConcurrent": 8 }
     }
   },
   "tools": {
     "profile": "full",
     "web": {
-      "search": {
-        "enabled": true
-      },
-      "fetch": {
-        "enabled": true
-      }
+      "search": { "enabled": true },
+      "fetch": { "enabled": true }
     },
     "exec": {
       "host": "gateway",
@@ -115,12 +78,8 @@
     "internal": {
       "enabled": true,
       "entries": {
-        "boot-md": {
-          "enabled": true
-        },
-        "session-memory": {
-          "enabled": true
-        }
+        "boot-md": { "enabled": true },
+        "session-memory": { "enabled": true }
       }
     }
   },
@@ -129,9 +88,7 @@
       "enabled": true,
       "dmPolicy": "allowlist",
       "selfChatMode": true,
-      "allowFrom": [
-        "+41762681891"
-      ],
+      "allowFrom": ["+41762681891"],
       "groupPolicy": "open",
       "debounceMs": 0,
       "mediaMaxMb": 50
@@ -142,37 +99,23 @@
     "mode": "local",
     "bind": "lan",
     "controlUi": {
-      "allowedOrigins": [
-        "http://localhost:18789",
-        "http://127.0.0.1:18789"
-      ]
+      "allowedOrigins": ["http://localhost:18789", "http://127.0.0.1:18789"]
     },
     "auth": {
       "mode": "password",
-      "password": "gjqtime"
+      "password": "YOUR_GATEWAY_PASSWORD"
     },
-    "tailscale": {
-      "mode": "off",
-      "resetOnExit": false
-    },
+    "tailscale": { "mode": "off", "resetOnExit": false },
     "nodes": {
-      "denyCommands": [
-        "camera.snap",
-        "camera.clip",
-        "screen.record"
-      ]
+      "denyCommands": ["camera.snap", "camera.clip", "screen.record"]
     }
   },
   "skills": {
-    "install": {
-      "nodeManager": "npm"
-    }
+    "install": { "nodeManager": "npm" }
   },
   "plugins": {
     "entries": {
-      "whatsapp": {
-        "enabled": true
-      }
+      "whatsapp": { "enabled": true }
     }
   },
   "meta": {
