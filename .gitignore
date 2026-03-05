@@ -1,0 +1,14 @@
+# Secrets
+*.key
+*.pem
+.env
+*.token
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Media
+media/
