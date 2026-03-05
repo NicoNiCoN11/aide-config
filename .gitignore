@@ -12,3 +12,7 @@
 
 # Media
 media/
+
+# Memory (private)
+memory/
+.openclaw/
