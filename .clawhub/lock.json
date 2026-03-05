@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "openai-whisper": {
+      "version": "1.0.0",
+      "installedAt": 1772563144037
+    },
+    "gcalcli-calendar": {
+      "version": "3.0.0",
+      "installedAt": 1772663536072
+    },
+    "pdf-extract": {
+      "version": "1.0.0",
+      "installedAt": 1772663540091
+    },
+    "notion-api-skill": {
+      "version": "1.0.6",
+      "installedAt": 1772663544768
+    },
+    "news-summary": {
+      "version": "1.0.1",
+      "installedAt": 1772664615656
+    }
+  }
+}
