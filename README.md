@@ -1,140 +1,65 @@
-# Aide - OpenClaw Setup Guide
+# Aide - OpenClaw Configuration (Optimized)
+
+## Architecture
+
+```
+aide-config/
+├── IDENTITY.md         # Bot identity (minimal)
+├── SOUL.md             # Personality & philosophy
+├── AGENTS.md           # Execution rules (single source of truth)
+├── USER.md             # User profile & context
+├── TOOLS.md            # Tool reference, workflows, email triage
+├── HEARTBEAT.md        # Periodic tasks, memory & disk management
+├── patterns.json       # → copy to ~/.openclaw/memory/patterns.json
+├── .gitignore
+├── skills/
+│   ├── apple-reminders-advanced/   # Sub-tasks, tags, batch ops via JXA
+│   └── reminders-calendar-sync/    # Reminders ↔ gcal time block sync
+└── openclaw-setup/
+    ├── config.template.json
+    └── README.md
+```
+
+## Design Principles
+
+1. **No redundancy.** Each rule lives in exactly one file. Other files reference, not repeat.
+2. **Token-efficient.** All config files are loaded into context every session. Every word costs tokens.
+3. **Native-first task management.** Apple Reminders = tasks (sub-tasks, tags, priority). Google Calendar = time blocks. Notion = project docs.
+4. **Persistent learning.** `patterns.json` survives across sessions. Daily summaries are temporary and get consolidated.
 
 ## Quick Start
 
 ```bash
-# 1. Clone this repo
+# 1. Clone
 git clone https://github.com/NicoNiCoN11/aide-config.git ~/.openclaw/workspace
 
-# 2. Copy and edit config
+# 2. Config
 cp openclaw-setup/config.template.json ~/.openclaw/openclaw.json
+nano ~/.openclaw/openclaw.json  # add API keys
 
-# 3. Edit the config with your API keys (see below)
-nano ~/.openclaw/openclaw.json
+# 3. Initialize memory
+mkdir -p ~/.openclaw/memory/{daily,weekly,monthly}
+cp patterns.json ~/.openclaw/memory/patterns.json
 
-# 4. Start OpenClaw
+# 4. Set up Reminders lists (agent will auto-create on first use, or run manually):
+# PhD申请, 实习, 行政, 个人, 学习, 项目
+
+# 5. Start
 openclaw gateway start
 ```
 
-## Configuration
+## Model Configuration
 
-### Required: Add Your API Keys
+Primary: MiniMax M2.5 (via API)
+- Strong agentic tool calling (BFCL 76.9%)
+- 1M token context window
+- Cost-effective ($0.3/M input, $2.4/M output)
 
-Edit `~/.openclaw/openclaw.json` and replace these placeholders:
+**Important:** M2.5 uses interleaved thinking (`<think>` tags). Always preserve full assistant messages in conversation history to maintain reasoning chain continuity.
 
-| Placeholder | Description | How to get |
-|-------------|-------------|------------|
-| `YOUR_MINIMAX_API_KEY` | MiniMax API key | https://platform.minimax.io/ |
-| `YOUR_GATEWAY_PASSWORD` | Web UI password | Choose any password |
+## Token Budget Notes
 
-### Adding More Models
-
-You can add multiple model providers in `models.providers`. Here's an example:
-
-```json
-{
-  "models": {
-    "mode": "merge",
-    "providers": {
-      "minimax-cn": { ... },
-      
-      "openai": {
-        "baseUrl": "https://api.openai.com/v1",
-        "apiKey": "YOUR_OPENAI_API_KEY",
-        "api": "anthropic-messages",
-        "models": [
-          {
-            "id": "gpt-4o",
-            "name": "GPT-4O",
-            "input": ["text", "image"],
-            "contextWindow": 128000,
-            "maxTokens": 16384
-          }
-        ]
-      },
-      
-      "anthropic": {
-        "baseUrl": "https://api.anthropic.com",
-        "apiKey": "YOUR_ANTHROPIC_API_KEY",
-        "api": "anthropic-messages",
-        "authHeader": true,
-        "models": [
-          {
-            "id": "claude-sonnet-4-20250514",
-            "name": "Claude Sonnet 4",
-            "reasoning": true,
-            "input": ["text", "image"],
-            "contextWindow": 200000,
-            "maxTokens": 8192
-          }
-        ]
-      },
-      
-      "ollama": {
-        "baseUrl": "http://localhost:11434",
-        "api": "anthropic-messages",
-        "models": [
-          {
-            "id": "qwen2.5:14b",
-            "name": "Qwen 2.5",
-            "contextWindow": 32768,
-            "maxTokens": 4096
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-### Switching Default Model
-
-Change `agents.defaults.model.primary`:
-
-```json
-"model": {
-  "primary": "openai/gpt-4o"
-}
-```
-
-### Adding Model Aliases
-
-```json
-"models": {
-  "openai/gpt-4o": {
-    "alias": "gpt4"
-  }
-}
-```
-
-## Supported API Formats
-
-- `anthropic-messages` - Anthropic-compatible (MiniMax, Ollama, custom endpoints)
-- `openai-completions` - OpenAI completions API
-- `openai-responses` - OpenAI responses API
-- `google-generative-ai` - Google Gemini
-- `ollama` - Local Ollama
-
-## File Structure
-
-```
-aide-config/
-├── AGENTS.md           # Agent behavior rules
-├── SOUL.md             # Personality definition
-├── TOOLS.md            # Tool usage notes
-├── USER.md             # User profile
-├── HEARTBEAT.md        # Periodic tasks
-├── IDENTITY.md         # Bot identity
-├── .gitignore
-├── skills/             # Custom skills
-└── openclaw-setup/
-    ├── config.template.json
-    ├── setup.sh
-    └── README.md
-```
-
-## What's Included
-
-- Core configuration files (AGENTS.md, SOUL.md, TOOLS.md, USER.md, HEARTBEAT.md, IDENTITY.md)
-- Custom skills for: calendar, news, notion, whisper, pdf
-- Setup automation script
+- All bootstrap files: ~2500 tokens total (down from ~5000+ before optimization)
+- Skills loaded on-demand, not at startup
+- Consolidation keeps memory files bounded
+- Suggest new session after ~15 turns to avoid context overflow

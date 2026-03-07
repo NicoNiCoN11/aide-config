@@ -1,171 +1,166 @@
-# TOOLS.md - Local Notes
-
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
-
-## CRITICAL RULES
-
-1. **ALWAYS execute commands directly.** Never show commands for Jiayi to run manually.
-2. **ALWAYS get current date/time first** before any time-related task: `date "+%Y-%m-%d %H:%M:%S %A"`
-3. **NEVER repeat a failed command more than twice.** Try a different approach.
-4. **NEVER ask for permission for local operations** (reminders, reading files, transcription). Just do it.
-5. **If a command fails, debug silently.** Only report to Jiayi after 3 different failed attempts.
+# TOOLS.md - Tool Reference & Workflows
 
 ## Date & Time
 
 - Timezone: Europe/Zurich
-- Get current date: `date "+%Y-%m-%d %H:%M:%S %A"`
-- Calculate tomorrow: `date -v+1d "+%Y-%m-%d"`
-- Calculate next week: `date -v+7d "+%Y-%m-%d"`
-- NEVER ask Jiayi what today's date is
+- Current datetime: `date "+%Y-%m-%d %H:%M:%S %A"`
+- Tomorrow: `date -v+1d "+%Y-%m-%d"`
+- Next week: `date -v+7d "+%Y-%m-%d"`
+- Timezone conversion: `TZ="Asia/Singapore" date -d "2026-03-10 14:00 CET" "+%Y-%m-%d %H:%M %Z"`
+- NEVER ask Jiayi what today's date is. Always compute it.
 
-## Apple Reminders (remindctl)
+## Apple Reminders (Task Management — Primary System)
 
-### Exact commands:
-- Add reminder: `remindctl add "title" --due "YYYY-MM-DD HH:MM"`
-- Add reminder for tomorrow: `remindctl add "title" --due "$(date -v+1d +%Y-%m-%d) HH:MM"`
-- List all: `remindctl list`
-- Delete: `remindctl delete "title"`
+> Full reference: `skills/apple-reminders-advanced/SKILL.md` — read before sub-tasks, tags, or batch ops.
 
-### Rules:
-- Execute directly via bash. No permission needed.
-- Always calculate the actual date first using `date` command.
-- Do NOT route through WhatsApp sessions.
+Apple Reminders is the **primary task management system**. Google Calendar is only for time-block visualization.
 
-## Whisper Transcription
+**Basic ops → remindctl (fast):**
+```bash
+remindctl add --title "Title" --list "PhD申请" --due "2026-03-15 09:00"
+remindctl today                    # today's tasks
+remindctl week                     # this week
+remindctl overdue                  # overdue
+remindctl list PhD申请              # view specific list
+remindctl edit <ID> --title "X" --due "2026-03-20"
+remindctl complete <ID>
+remindctl delete <ID> --force
+```
 
-### Exact commands:
-- Chinese audio: `whisper <filepath> --model base --language zh`
-- English audio: `whisper <filepath> --model base --language en`
-- Auto-detect: `whisper <filepath> --model base`
+**Advanced ops → osascript -l JavaScript (sub-tasks, tags, batch):**
+- Create sub-tasks, add/query tags, batch postpone, batch tag → see skill SKILL.md
+- Always use `osascript -l JavaScript << 'EOF' ... EOF` pattern
 
-### Paths:
-- Whisper binary: `/opt/homebrew/bin/whisper`
-- Inbound media: `~/.openclaw/media/inbound/`
+**Lists as categories:** PhD申请, 实习, 行政, 个人, 学习, 项目
 
-### Rules:
-- When receiving audio/voice messages, transcribe IMMEDIATELY. No permission needed.
-- Read the transcription output and respond to its content naturally.
-- If whisper is not found at default path, try: `/Users/guojiayi/anaconda3/bin/whisper`
+**Rules:**
+- Execute directly. No permission needed.
+- Always calculate date first.
+- Default time if unspecified: 09:00 Zurich.
+- Tag convention: #urgent, #waiting, #gcal-synced, #<program-name>
+
+## Google Calendar (gcalcli)
+
+> Full reference: `skills/gcalcli-calendar/SKILL.md` — read before complex operations.
+
+Google Calendar is for **time blocks only**, not task tracking.
+
+Common commands:
+```bash
+# Today's agenda
+gcalcli --nocolor agenda today tomorrow
+
+# Next 14 days (for weekday resolution)
+gcalcli --nocolor agenda today +14d
+
+# Create event
+gcalcli --nocolor --calendar "CalName" add --noprompt --title "Title" --when "Start" --duration Minutes
+
+# Delete (non-interactive) + verify
+gcalcli --nocolor delete --iamaexpert "query" start end
+gcalcli --nocolor agenda start end  # verify deletion
+```
+
+Key rules:
+- Global flags (`--nocolor`, `--calendar`) go BEFORE subcommand.
+- Subcommand flags (`--iamaexpert`, `--noprompt`) go AFTER subcommand.
+- `edit` is interactive → cannot use. Always delete+recreate.
+- Overlap check before create: `gcalcli --nocolor agenda start end` (NO `--calendar` flag — must be cross-calendar).
+- Deleting >2 events at once → ask Jiayi for confirmation.
+
+## Notion (Reference / Long-form Notes — Secondary)
+
+> Full reference: `skills/notion-api-skill/SKILL.md` — read before first use.
+
+Use Notion for **project-level documentation**, not daily tasks. Examples: PhD application tracker with notes per program, research reading logs, internship company research.
+
+- API pattern: Use `python << 'EOF'` (not curl pipe) to avoid env variable issues.
+- Always use Notion-Version: 2025-09-03.
 
 ## Himalaya (Email)
 
-### Account: gjqtime@gmail.com
+Account: gjqtime@gmail.com
 
-### Exact commands:
-- List recent emails: `himalaya envelope list`
-- Read an email: `himalaya message read <ID>`
-- Send an email:
-  ```
-  himalaya message send <<EOF
-  From: gjqtime@gmail.com
-  To: <recipient>
-  Subject: <subject>
+```bash
+himalaya envelope list                              # recent emails
+himalaya message read <ID>                          # read email
+himalaya envelope list --search <query>             # search
+himalaya folder list                                # list folders
+himalaya envelope list --folder "[Gmail]/Sent Mail" # sent mail
 
-  <body>
-  EOF
-  ```
-- Search emails: `himalaya envelope list --search <query>`
-- List folders: `himalaya folder list`
-- List sent mail: `himalaya envelope list --folder "[Gmail]/Sent Mail"`
+# Send (permission required)
+himalaya message send <<EOF
+From: gjqtime@gmail.com
+To: <recipient>
+Subject: <subject>
 
-### Rules:
-- Execute directly. No permission needed for reading.
-- Ask permission ONLY before sending emails to others.
-- When summarizing emails, be concise: sender, subject, key action needed.
+<body>
+EOF
+```
+
+### Email Triage Rules
+
+When checking emails, classify and report by priority:
+
+| Priority | Criteria | Action |
+|----------|----------|--------|
+| 🔴 Urgent | From PI/professor, contains deadline within 7 days, interview invitation | Notify immediately with summary |
+| 🟡 Important | PhD program correspondence, internship responses, admin with deadline | Summarize, flag deadline |
+| 🟢 Normal | Confirmations, receipts, university newsletters | Brief one-line summary |
+| ⚪ Skip | Marketing, ads, automated notifications | Don't mention unless asked |
+
+### Email Compose Style
+
+| Recipient | Style |
+|-----------|-------|
+| Professor/PI | 简洁专业。第一句话直接说目的。不用Dear/Best regards，用 "Hi Prof. X" / "Best, Jiayi" |
+| 行政/大学 | 正式简短。包含学号/reference number如果有 |
+| 同学/朋友 | 随意 |
+
+- Always draft first, show to Jiayi, send only after explicit approval.
+- If replying, quote the relevant context briefly.
+
+## Whisper (Transcription)
+
+```bash
+whisper <filepath> --model base --language zh    # Chinese
+whisper <filepath> --model base --language en    # English
+whisper <filepath> --model base                  # auto-detect
+```
+
+- Paths: `/opt/homebrew/bin/whisper` or `/Users/guojiayi/anaconda3/bin/whisper`
+- Inbound media: `~/.openclaw/media/inbound/`
+- Model cache: `~/.cache/whisper/` (base ~150MB, medium ~1.5GB, large ~3GB)
+- Transcribe voice messages IMMEDIATELY. No permission needed.
+- After transcription, respond to the content directly.
+- **Disk rule:** Default to `base` model. Only use `medium`/`large` if Jiayi explicitly asks for higher accuracy. Don't download larger models without asking.
 
 ## Apple Notes (memo)
 
-### Exact commands:
-- Create note: `memo add "title" "content"`
-- List notes: `memo list`
-- Search: `memo search "keyword"`
-- View: `memo view <id>`
+```bash
+memo add "title" "content"
+memo list
+memo search "keyword"
+memo view <id>
+```
 
 ## iMessage (imsg)
 
-### Exact commands:
-- List chats: `imsg chats`
-- Chat history: `imsg history <chat_id>`
-- Send message: `imsg send <phone_or_email> "message"`
+```bash
+imsg chats
+imsg history <chat_id>
+imsg send <phone_or_email> "message"   # permission required
+```
 
 ## Web Search
 
-- Use web search for current information, news, research papers.
-- Use web fetch to read full page content after search.
+- Use for current information, news, research papers, PI publications, program deadlines.
+- After search, use web fetch to read full page content.
+- Useful for: checking PI's latest papers, verifying program deadlines, looking up application portals.
 
-## Daily Summary
+## Error Handling
 
-At end of day or when Jiayi says "总结" / "daily summary":
-1. Run: `mkdir -p ~/.openclaw/memory/daily`
-2. Create: `~/.openclaw/memory/daily/YYYY-MM-DD.json`
-3. **CRITICAL: Capture ALL important information:**
-   - Tasks completed with details
-   - Any decisions made (skills installed, rules changed, etc.)
-   - Key preferences or instructions from Jiayi
-   - Lessons learned (what worked, what failed)
-   - Tomorrow's priorities
-   - Any ongoing projects or follow-ups
-4. Run memory consolidation check (see below)
-
-## Memory Consolidation Rules
-
-To prevent memory overflow, execute the following consolidation strategy:
-
-### File Structure
-```
-~/.openclaw/memory/
-├── daily/          # Daily summaries (YYYY-MM-DD.json)
-├── weekly/         # Weekly summaries (YYYY-Www.json, ISO week number)
-└── monthly/        # Monthly summaries (YYYY-MM.json)
-```
-
-### Consolidation Rules
-1. **Every 7 days** → Check daily/ directory, if ≥7 daily summaries exist:
-   - Read last 3 days of daily summaries
-   - Merge into weekly summary (aggregate tasks_completed, tasks_failed, lessons_learned)
-   - Save to weekly/YYYY-Www.json
-   - Delete these 7 daily summary files
-
-2. **Every 4 weeks** → Check weekly/ directory, if ≥4 weekly summaries exist:
-   - Read last 4 weeks of weekly summaries
-   - Merge into monthly summary
-   - Save to monthly/YYYY-MM.json
-   - Delete these 4 weekly summary files
-
-### When to Execute
-- Automatically check every time generating daily summary
-- Or when Jiayi says "整理内存" / "consolidate memory"
-
-### Code Logic
-```bash
-# Check if weekly consolidation needed
-daily_count=$(ls ~/.openclaw/memory/daily/*.json 2>/dev/null | wc -l)
-if [ "$daily_count" -ge 7 ]; then
-    # Merge last 7 days into weekly summary
-    # Delete these 7 files
-fi
-
-# Check if monthly consolidation needed  
-weekly_count=$(ls ~/.openclaw/memory/weekly/*.json 2>/dev/null | wc -l)
-if [ "$weekly_count" -ge 4 ]; then
-    # Merge last 4 weeks into monthly summary
-    # Delete these 4 files
-fi
-```
-
-## Email & Messaging Rules
-
-- **ALWAYS confirm TWICE before sending emails or messages to other people**
-- Write the draft first, wait for confirmation, then send only after second confirmation
-- Never send anything without explicit permission
-
-## Error Handling Protocol
-
-1. Command fails → check error message, adjust flags/arguments, retry ONCE
-2. Second failure → try completely different tool or approach
-3. Third failure → report to Jiayi concisely: "I tried X, Y, Z. All failed because [reason]. Recommend [solution]."
-4. NEVER enter a loop. NEVER retry the same thing more than twice.
-
----
-
-Add whatever helps you do your job. This is your cheat sheet.
+1. First failure → check error, adjust flags, retry once
+2. Second failure → completely different tool or approach
+3. Third failure → report to Jiayi: "Tried X, Y, Z. Failed because [reason]. Recommend [solution]."
+4. NEVER loop. NEVER retry same thing > twice.
